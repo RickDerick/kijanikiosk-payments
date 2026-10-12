@@ -16,4 +16,4 @@ pipeline {
             echo "The pipeline finished. Status: ${currentBuild.result ?: 'SUCCESS'}"
         }
     }
-}
+
