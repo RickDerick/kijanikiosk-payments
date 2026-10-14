@@ -3,3 +3,4 @@ coverage/
 *.log
 .env
 dist/
+test-results/

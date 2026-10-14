@@ -13,9 +13,6 @@ pipeline {
         disableConcurrentBuilds()
     }
 
-    // Kept from Monday so the trigger is version-controlled with the pipeline.
-    // Jenkins on Multipass is unreachable from GitHub, so it polls instead of
-    // receiving webhooks. H spreads the check across the 5-minute window.
     triggers {
         pollSCM('H/5 * * * *')
     }
@@ -37,9 +34,21 @@ pipeline {
         '''
     }
 }
-        stage('Test') {
+                stage('Test') {
             steps {
-                echo "Test stage: TODO"
+                echo "Running test suite for ${APP_NAME}..."
+                sh '''
+                    set -e
+                    npm test -- --ci
+                '''
+            }
+            post {
+                always {
+                    // Publish JUnit results so Jenkins tracks test history
+                    // even if the tests failed
+                    junit allowEmptyResults: true,
+                          testResults: 'test-results/*.xml'
+                }
             }
         }
         stage('Archive') {

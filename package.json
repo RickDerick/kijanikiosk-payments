@@ -16,10 +16,12 @@
     "testEnvironment": "node",
     "collectCoverageFrom": [
       "src/**/*.js"
-    ]
+    ],
+    "reporters": ["default", ["jest-junit", { "outputDirectory": "test-results", "outputName": "junit.xml" }]]
   },
   "license": "UNLICENSED",
   "devDependencies": {
-    "jest": "30.5.2"
+    "jest": "30.5.2",
+    "jest-junit": "^17.0.0"
   }
 }
