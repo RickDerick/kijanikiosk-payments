@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "KijaniKiosk payments service: validates payment requests and exposes a small HTTP API",
   "main": "src/server.js",
-  "private": true,
   "engines": {
     "node": ">=20"
   },

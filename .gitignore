@@ -6,3 +6,4 @@ dist/
 test-results/
 *.tar.gz
 *.tgz
+.npmrc
