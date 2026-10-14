@@ -52,10 +52,14 @@ pipeline {
             }
         }
         stage('Archive') {
-            steps {
-                echo "Archive stage: TODO"
-            }
+        steps {
+            echo "Archiving build artifact for ${APP_NAME} build ${BUILD_NUMBER}..."
+            archiveArtifacts artifacts: "${BUILD_DIR}/**",
+                            fingerprint: true,
+                            onlyIfSuccessful: true
+            echo "Artifact archived. Download from: ${BUILD_URL}artifact/"
         }
+}
     }
 
     post {
