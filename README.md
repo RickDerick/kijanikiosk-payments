@@ -34,3 +34,5 @@ curl -X POST localhost:3001/payments \
 - Currency: KES only
 - Phone: Kenyan mobile number (07…, 01…, +254…, 254…), normalised to `254XXXXXXXXX`
 - Reference: 1 to 20 characters
+
+CI: every commit to main is linted, built, tested, audited, archived and published to Nexus as <version>-<commit>.
