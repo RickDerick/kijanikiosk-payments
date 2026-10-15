@@ -83,3 +83,4 @@ module.exports = {
   toMinorUnits,
   validatePayment,
 };
+const injectedLintFault = 42;
