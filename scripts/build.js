@@ -1,4 +1,5 @@
 const fs = require('fs');
+throw new Error('Injected build fault');
 
 // Start from an empty dist/ folder every time
 fs.rmSync('dist', { recursive: true, force: true });
