@@ -83,3 +83,7 @@ describe('validatePayment', () => {
     expect(result.errors).toHaveLength(4);
   });
 });
+
+test('ci-pipeline-verification: deliberate failure', () => {
+  expect(true).toBe(false);
+});
