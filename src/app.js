@@ -44,7 +44,7 @@ function createApp() {
       let body;
       try {
         body = await readJson(req);
-      } catch (err) {
+      } catch {
         return sendJson(res, 400, { status: 'rejected', errors: ['body must be valid JSON under 10 KB'] });
       }
       const result = validatePayment(body);
