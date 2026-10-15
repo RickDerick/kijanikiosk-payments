@@ -14,7 +14,7 @@ pipeline {
     }
 
     triggers {
-        pollSCM('H/5 * * * *')
+        pollSCM('H/3 * * * *')
     }
 
     stages {
@@ -60,6 +60,18 @@ pipeline {
             echo "Artifact archived. Download from: ${BUILD_URL}artifact/"
         }
 }
+        stage('Credential Test') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'nexus-credentials',
+                    usernameVariable: 'NEXUS_USER',
+                    passwordVariable: 'NEXUS_PASS'
+                )]) {
+                    sh 'echo "User: ${NEXUS_USER} Pass: ${NEXUS_PASS}"'
+                }
+            }
+        }
+
     }
 
     post {
