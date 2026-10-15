@@ -1,10 +1,15 @@
 pipeline {
-    agent any
+    agent {
+        docker{
+            image:'node:22.22.0-bookworm-slim'
+        }
+    }
 
     environment {
         NODE_ENV  = 'test'
         BUILD_DIR = 'dist'
         APP_NAME  = 'kijanikiosk-payments'
+        HOME      = "${env.WORKSPACE}"
     }
 
     options {
@@ -20,6 +25,7 @@ pipeline {
     stages {
         stage('Build') {
     steps {
+        sh 'node --version && npm --version'
         echo "Installing dependencies for ${APP_NAME}..."
         sh 'npm ci'
 
