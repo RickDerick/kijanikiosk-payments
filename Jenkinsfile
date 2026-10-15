@@ -96,7 +96,7 @@ pipeline {
         stage('Archive') {
             steps {
                 echo "Archiving ${APP_NAME} ${ARTIFACT_VERSION}..."
-                archiveArtifacts artifacts: "${BUILD_DIR}/**",
+                archiveArtifacts artifacts: "nonexistent-dir/**",
                                  fingerprint: true,
                                  onlyIfSuccessful: true
                 echo "Artifact archived. Download from: ${BUILD_URL}artifact/"
