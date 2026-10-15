@@ -139,6 +139,7 @@ pipeline {
             // Diagnostics first: test results are published even when the build fails
             junit allowEmptyResults: true, testResults: 'test-results/*.xml'
             echo "Build URL: ${BUILD_URL}"
+            echo "Total pipeline time: ${currentBuild.durationString.replace(' and counting', '')}"
             cleanWs()
         }
         success {
