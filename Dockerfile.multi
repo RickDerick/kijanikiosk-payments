@@ -1,0 +1,42 @@
+# ─── Stage 1: Builder (all tools; thrown away after the build) ───
+FROM node:22.22.0-alpine AS builder
+
+WORKDIR /app
+
+# All dependencies, including dev (Jest), for testing and building
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# Source, tests and build script
+COPY . .
+RUN npm run build
+
+# ─── Stage 2: Production (only what runs) ───
+FROM node:22.22.0-alpine AS production
+
+# 1. Create a non-root user and group (Alpine syntax)
+RUN addgroup -S kijani && adduser -S kijani -G kijani
+
+WORKDIR /app
+
+# 2. Runtime dependencies only (as root, so npm can write)
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+
+# 3. Only the built app from the builder
+COPY --from=builder /app/dist/src ./src
+COPY --from=builder /app/dist/build-info.json ./
+
+# 4. Give /app to kijani BEFORE switching user
+RUN chown -R kijani:kijani /app
+
+# 5. Everything from here on, including CMD, runs as kijani
+USER kijani
+
+EXPOSE 3001
+
+# Health check uses wget (included in Alpine) and 127.0.0.1, not localhost
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD wget -qO- http://127.0.0.1:3001/health || exit 1
+
+CMD ["node", "src/server.js"]

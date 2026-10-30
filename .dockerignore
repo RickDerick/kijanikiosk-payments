@@ -1,0 +1,21 @@
+# Installed inside the image
+node_modules/
+
+# Never let secrets into an image
+.env
+.npmrc
+*.key
+*.pem
+
+# Not needed at runtime
+.git/
+coverage/
+test-results/
+dist/
+*.tgz
+*.tar.gz
+Jenkinsfile
+README.md
+Dockerfile
+.dockerignore
+.gitignore
