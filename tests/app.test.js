@@ -26,7 +26,7 @@ const postPayment = (body) =>
 test('GET /health reports ok', async () => {
   const res = await fetch(`${baseUrl}/health`);
   expect(res.status).toBe(200);
-  expect(await res.json()).toEqual({ service: 'kk-payments', status: 'ok' });
+  expect(await res.json()).toEqual({ service: 'kk-payments', status: 'ok', version: require('../package.json').version });
 });
 
 test('POST /payments accepts a valid payment', async () => {

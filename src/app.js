@@ -4,6 +4,8 @@ const http = require('http');
 const { validatePayment } = require('./payments');
 
 const MAX_BODY_BYTES = 10 * 1024;
+// Deployed tag baked into the image (e.g. 1.0.0-abc1234); falls back to package.json locally
+const VERSION = process.env.APP_VERSION || require('../package.json').version;
 
 function sendJson(res, status, body) {
   res.writeHead(status, { 'Content-Type': 'application/json' });
@@ -37,7 +39,7 @@ function readJson(req) {
 function createApp() {
   return http.createServer(async (req, res) => {
     if (req.method === 'GET' && req.url === '/health') {
-      return sendJson(res, 200, { service: 'kk-payments', status: 'ok' });
+      return sendJson(res, 200, { service: 'kk-payments', status: 'ok', version: VERSION });
     }
 
     if (req.method === 'POST' && req.url === '/payments') {

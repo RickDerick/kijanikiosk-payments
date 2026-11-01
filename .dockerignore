@@ -7,15 +7,19 @@ node_modules/
 *.key
 *.pem
 
-# Not needed at runtime
+# Not needed in the image (tests run in Jenkins, not in the image build)
 .git/
+.gitignore
 coverage/
 test-results/
 dist/
+tests/
+**/*.test.js
+eslint.config.js
 *.tgz
 *.tar.gz
 Jenkinsfile
 README.md
-Dockerfile
+k8s/
+Dockerfile*
 .dockerignore
-.gitignore
