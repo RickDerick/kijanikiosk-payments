@@ -14,13 +14,13 @@ spec:
     metadata:
       labels:
         app: kk-payments          # must match selector above
-        version: "1.0.0-e6963d5"
+        version: "1.0.0-a59f2c1"
     spec:
       imagePullSecrets:
         - name: kijani-registry-credentials   # reference only, never the token
       containers:
         - name: kk-payments
-          image: docker.io/derickharon/kk-payments:1.0.0-e6963d5
+          image: docker.io/derickharon/kk-payments:1.0.0-a59f2c1
           ports:
             - containerPort: 3001
           env:
