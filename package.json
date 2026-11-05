@@ -1,6 +1,6 @@
 {
   "name": "kijanikiosk-payments",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "KijaniKiosk payments service: validates payment requests and exposes a small HTTP API",
   "main": "src/server.js",
   "engines": {
@@ -14,7 +14,9 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "modulePathIgnorePatterns": ["<rootDir>/dist/"],
+    "modulePathIgnorePatterns": [
+      "<rootDir>/dist/"
+    ],
     "collectCoverageFrom": [
       "src/**/*.js"
     ],
