@@ -4,9 +4,14 @@ metadata:
   name: kk-payments
   labels:
     app: kk-payments
-    week: "8"
+    week: "9"
 spec:
-  replicas: 2
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1           # at most 4 Pods during the update
+      maxUnavailable: 1     # at least 2 Pods serving at all times
   selector:
     matchLabels:
       app: kk-payments            # must match template labels below
