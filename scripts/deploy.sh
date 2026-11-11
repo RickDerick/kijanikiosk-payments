@@ -37,6 +37,8 @@ render "$REPO_ROOT/k8s/kk-payments-deployment.yaml" | kubectl -n "$NAMESPACE" ap
 render "$REPO_ROOT/k8s/kk-payments-service.yaml"    | kubectl -n "$NAMESPACE" apply -f -
 
 if kubectl -n "$NAMESPACE" rollout status "deployment/${DEPLOYMENT_NAME}" --timeout=150s; then
+  # NEW: wait until Pods of the old version are gone, so the Service only routes to new Pods
+  kubectl -n "$NAMESPACE" wait --for=delete pod -l "app=kk-payments,version!=${VERSION}" --timeout=60s 2>/dev/null || true
   echo "== Rollout complete: ${ENV_NAME} is running ${VERSION}"
   kubectl -n "$NAMESPACE" get pods -l app=kk-payments -o wide
   exit 0

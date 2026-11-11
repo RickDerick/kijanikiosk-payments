@@ -15,6 +15,10 @@ BODY=$(mktemp)
 trap 'rm -f "$BODY"' EXIT
 fail() { echo "SMOKE FAILED (${ENV_NAME}): $*"; exit 1; }
 
+# Retry each request a few times: one dropped connection during a rollout must not
+# fail a release, but an endpoint that is really broken still fails.
+CURL_RETRY=(--retry 3 --retry-all-errors --retry-delay 2)
+
 echo "== Smoke test ${ENV_NAME} at ${BASE_URL} (X-Request-Id: ${REQ_ID})"
 
 HEALTH=""
@@ -27,13 +31,13 @@ echo "health:  ${HEALTH}"
 grep -q "\"version\":\"${EXPECTED_VERSION}\"" <<<"$HEALTH" || fail "expected version ${EXPECTED_VERSION}"
 grep -q "\"environment\":\"${APP_ENV}\"" <<<"$HEALTH"     || fail "expected environment ${APP_ENV}"
 
-code=$(curl -s -o "$BODY" -w '%{http_code}' -m 5 -H 'Content-Type: application/json' \
-  -H "X-Request-Id: ${REQ_ID}" --data @"${REPO_ROOT}/scripts/sample-payment.json" "${BASE_URL}/payments")
+code=$(curl -s -o "$BODY" -w '%{http_code}' -m 5 "${CURL_RETRY[@]}" -H 'Content-Type: application/json' \
+  -H "X-Request-Id: ${REQ_ID}" --data @"${REPO_ROOT}/scripts/sample-payment.json" "${BASE_URL}/payments") || code="000"
 echo "valid payment:   HTTP ${code} $(cat "$BODY")"
 [ "$code" = "202" ] || fail "valid payment returned ${code}, expected 202"
 
-code=$(curl -s -o "$BODY" -w '%{http_code}' -m 5 -H 'Content-Type: application/json' \
-  -H "X-Request-Id: ${REQ_ID}" --data '{"amount":-1}' "${BASE_URL}/payments")
+code=$(curl -s -o "$BODY" -w '%{http_code}' -m 5 "${CURL_RETRY[@]}" -H 'Content-Type: application/json' \
+  -H "X-Request-Id: ${REQ_ID}" --data '{"amount":-1}' "${BASE_URL}/payments") || code="000"
 echo "invalid payment: HTTP ${code}"
 [ "$code" = "400" ] || fail "invalid payment returned ${code}, expected 400"
 
