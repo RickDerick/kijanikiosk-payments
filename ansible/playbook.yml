@@ -1,0 +1,84 @@
+# Configures one kk-payments environment inside its namespace.
+# Usage: ansible-playbook -i ansible/inventory/hosts.yml ansible/playbook.yml -e target_env=staging
+- name: Configure kk-payments environment
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    env_file: "{{ playbook_dir }}/../environments/{{ target_env }}.env"
+    common_file: "{{ playbook_dir }}/../environments/common.env"
+    namespace: "{{ lookup('ansible.builtin.ini', 'NAMESPACE', type='properties', file=env_file) }}"
+    app_env: "{{ lookup('ansible.builtin.ini', 'APP_ENV', type='properties', file=env_file) }}"
+    db_host: "{{ lookup('ansible.builtin.ini', 'DB_HOST', type='properties', file=env_file) }}"
+    configmap_name: "{{ lookup('ansible.builtin.ini', 'CONFIGMAP_NAME', type='properties', file=common_file) }}"
+    pull_secret_name: "{{ lookup('ansible.builtin.ini', 'PULL_SECRET_NAME', type='properties', file=common_file) }}"
+    registry_server: "{{ lookup('ansible.builtin.ini', 'REGISTRY_SERVER', type='properties', file=common_file) }}"
+    registry_user: "{{ lookup('ansible.builtin.env', 'DOCKERHUB_USERNAME') }}"
+    registry_token: "{{ lookup('ansible.builtin.env', 'DOCKERHUB_TOKEN') }}"
+
+  module_defaults:
+    group/kubernetes.core.k8s:
+      context: minikube
+
+  tasks:
+    - name: Check target_env is staging or production
+      ansible.builtin.assert:
+        that: target_env is defined and target_env in ['staging', 'production']
+        fail_msg: "Run with -e target_env=staging or -e target_env=production"
+
+    - name: Check registry credentials were provided
+      ansible.builtin.assert:
+        that: registry_user | length > 0 and registry_token | length > 0
+        fail_msg: "Set DOCKERHUB_USERNAME and DOCKERHUB_TOKEN before running"
+      no_log: true
+
+    - name: Read the target namespace (staging is created by Terraform, never here)
+      kubernetes.core.k8s_info:
+        kind: Namespace
+        name: "{{ namespace }}"
+      register: ns_info
+
+    - name: Stop if the namespace does not exist
+      ansible.builtin.fail:
+        msg: "Namespace {{ namespace }} not found. Run terraform apply first."
+      when: ns_info.resources | length == 0
+
+    - name: Apply environment ConfigMap
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: "{{ configmap_name }}"
+            namespace: "{{ namespace }}"
+            labels:
+              app: kk-payments
+              app.kubernetes.io/managed-by: ansible
+          data:
+            APP_ENV: "{{ app_env }}"
+            DB_HOST: "{{ db_host }}"
+
+    - name: Apply registry pull secret (value never logged)
+      no_log: true
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          type: kubernetes.io/dockerconfigjson
+          metadata:
+            name: "{{ pull_secret_name }}"
+            namespace: "{{ namespace }}"
+            labels:
+              app.kubernetes.io/managed-by: ansible
+          data:
+            .dockerconfigjson: >-
+              {{ {'auths': {registry_server: {'username': registry_user,
+                  'password': registry_token,
+                  'auth': (registry_user ~ ':' ~ registry_token) | b64encode}}}
+                 | to_json | b64encode }}
+
+    - name: Report what was configured
+      ansible.builtin.debug:
+        msg: "{{ target_env }}: namespace={{ namespace }} configmap={{ configmap_name }} APP_ENV={{ app_env }} DB_HOST={{ db_host }}"
