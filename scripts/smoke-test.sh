@@ -38,7 +38,8 @@ echo "invalid payment: HTTP ${code}"
 [ "$code" = "400" ] || fail "invalid payment returned ${code}, expected 400"
 
 sleep 2
-if kubectl -n "$NAMESPACE" logs -l app=kk-payments --since=5m --tail=-1 | grep -q "\"requestId\":\"${REQ_ID}\""; then
+LOGS=$(kubectl -n "$NAMESPACE" logs -l app=kk-payments --since=5m --tail=-1)
+if grep -qF "\"requestId\":\"${REQ_ID}\"" <<<"$LOGS"; then
   echo "correlation: ${REQ_ID} found in structured logs"
 else
   fail "request ID ${REQ_ID} not found in logs"
