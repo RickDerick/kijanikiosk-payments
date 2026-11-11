@@ -1,40 +1,65 @@
+# One Deployment manifest for every environment.
+# scripts/deploy.sh fills the __PLACEHOLDERS__ from environments/common.env and
+# environments/<env>.env; the namespace is chosen with -n and never written here.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: kk-payments
-  annotations:
-    kubernetes.io/change-cause: "Update kk-payments to 1.1.0: fix payment processing latency"
   labels:
     app: kk-payments
-    week: "9"
+  annotations:
+    kubernetes.io/change-cause: "__CHANGE_CAUSE__"
 spec:
-  replicas: 3
+  replicas: __REPLICAS__
+  revisionHistoryLimit: 10
+  # A release that cannot become Ready within 2 minutes is marked failed,
+  # so the pipeline's rollout check fails and the rollback runs.
+  progressDeadlineSeconds: 120
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxSurge: 1           # at most 4 Pods during the update
-      maxUnavailable: 1     # at least 2 Pods serving at all times
+      maxSurge: 1
+      # Week 9 showed maxUnavailable: 1 drops capacity during a rollout.
+      # 0 means an old Pod is removed only after its replacement is Ready.
+      maxUnavailable: 0
   selector:
     matchLabels:
-      app: kk-payments            # must match template labels below
+      app: kk-payments
   template:
     metadata:
       labels:
-        app: kk-payments          # must match selector above
-        version: "1.1.0-84c9e6e"
+        app: kk-payments
+        version: "__VERSION__"
     spec:
+      terminationGracePeriodSeconds: 20
       imagePullSecrets:
-        - name: kijani-registry-credentials   # reference only, never the token
+        - name: __PULL_SECRET_NAME__
       containers:
         - name: kk-payments
-          image: docker.io/derickharon/kk-payments:1.1.0-84c9e6e
+          image: __IMAGE__
           ports:
-            - containerPort: 3001
-          env:
-            - name: NODE_ENV
-              value: "production"
-            - name: PORT
-              value: "3001"
+            - name: http
+              containerPort: 3001
+          # APP_ENV and DB_HOST come from the environment's ConfigMap (Ansible)
+          envFrom:
+            - configMapRef:
+                name: __CONFIGMAP_NAME__
+          # Ready = /health answers, so traffic only reaches Pods that can serve
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 5
+            failureThreshold: 3
+          # Live = still answering; restart the container if it stops
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
           resources:
             requests:
               memory: "64Mi"
@@ -42,3 +67,5 @@ spec:
             limits:
               memory: "256Mi"
               cpu: "500m"
+          securityContext:
+            allowPrivilegeEscalation: false

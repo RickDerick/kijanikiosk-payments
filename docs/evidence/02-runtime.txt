@@ -1,0 +1,24 @@
+== kijani-staging
+NAME                          READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/kk-payments   2/2     2            2           8m59s
+
+NAME                               READY   STATUS    RESTARTS   AGE
+pod/kk-payments-66769868d6-5kwvl   1/1     Running   0          8m59s
+pod/kk-payments-66769868d6-dcwzw   1/1     Running   0          8m59s
+== default
+NAME                          READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/kk-payments   3/3     3            3           9d
+
+NAME                               READY   STATUS    RESTARTS   AGE
+pod/kk-payments-66769868d6-fkrgq   1/1     Running   0          8m42s
+pod/kk-payments-66769868d6-g6jmt   1/1     Running   0          8m35s
+pod/kk-payments-66769868d6-kfmgt   1/1     Running   0          8m29s
+== probes
+    Liveness:   http-get http://:http/health delay=10s timeout=1s period=10s successThreshold=1 failureThreshold=3
+    Readiness:  http-get http://:http/health delay=2s timeout=1s period=5s successThreshold=1 failureThreshold=3
+== same version, different environment
+{"service":"kk-payments","status":"ok","version":"1.1.0-036ed12","environment":"staging"}
+{"service":"kk-payments","status":"ok","version":"1.1.0-036ed12","environment":"production"}
+== correlation
+{"service":"kk-payments","status":"ok","version":"1.1.0-036ed12","environment":"staging"}
+{"ts":"2026-11-11T11:18:28.998Z","level":"info","service":"kk-payments","env":"staging","msg":"request","requestId":"evidence-001","method":"GET","path":"/health","status":200,"durationMs":0}
