@@ -1,0 +1,111 @@
++ bash scripts/deploy.sh staging docker.io/derickharon/kk-payments:1.1.0-f4af50b Jenkins #47: 1.1.0-f4af50b to staging
+== Deploying docker.io/derickharon/kk-payments:1.1.0-f4af50b to staging (namespace kijani-staging)
+deployment.apps/kk-payments configured
+service/kk-payments-service unchanged
+Waiting for deployment "kk-payments" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "kk-payments" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "kk-payments" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "kk-payments" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "kk-payments" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "kk-payments" rollout to finish: 1 old replicas are pending termination...
+deployment "kk-payments" successfully rolled out
+== Rollout complete: staging is running 1.1.0-f4af50b
+NAME                           READY   STATUS        RESTARTS   AGE    IP            NODE       NOMINATED NODE   READINESS GATES
+kk-payments-66769868d6-5kwvl   1/1     Terminating   0          150m   10.244.0.7    minikube   <none>           <none>
+kk-payments-687cbbf646-ctwrx   1/1     Running       0          19s    10.244.0.11   minikube   <none>           <none>
+kk-payments-687cbbf646-r9fhd   1/1     Running       0          6s     10.244.0.12   minikube   <none>           <none>
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Smoke Test Staging)
+[Pipeline] sh
+== Smoke test staging at http://192.168.49.2:30002 (X-Request-Id: smoke-staging-1794404381)
+health:  {"service":"kk-payments","status":"ok","version":"1.1.0-f4af50b","environment":"staging"}
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Error-Rate Check)
+Stage "Error-Rate Check" skipped due to earlier failure(s)
+[Pipeline] getContext
+[Pipeline] }
+[Pipeline] // stage
+Post stage
+[Pipeline] archiveArtifacts
+Archiving artifacts
+[Pipeline] sh
++ docker logout
+[Pipeline] script
+[Pipeline] {
+[Pipeline] echo
+Staging release failed: rolling staging back automatically
+[Pipeline] sh
++ bash scripts/rollback.sh staging
+== ROLLBACK staging (namespace kijani-staging)
+Warning: resource deployments/kk-payments was previously managed with 'kubectl apply'. Rolling back will not update the kubectl.kubernetes.io/last-applied-configuration annotation, which may cause unexpected behavior on future 'kubectl apply' operations. Consider using 'kubectl apply' with your previous configuration file instead.
+deployment.apps/kk-payments rolled back
+Waiting for deployment "kk-payments" rollout to finish: 0 out of 2 new replicas have been updated...
+Waiting for deployment "kk-payments" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "kk-payments" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "kk-payments" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "kk-payments" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "kk-payments" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "kk-payments" rollout to finish: 1 old replicas are pending termination...
+deployment "kk-payments" successfully rolled out
+-- Now serving:
+{"service":"kk-payments","status":"ok","version":"1.1.0-036ed12","environment":"staging"}
+deployment.apps/kk-payments 
+REVISION  CHANGE-CAUSE
+2         Jenkins #47: 1.1.0-f4af50b to staging
+3         manual: first staging deploy of 1.1.0-036ed12
+
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] cleanWs
+[WS-CLEANUP] Deleting project workspace...
+[WS-CLEANUP] Deferred wipeout is used...
+[WS-CLEANUP] done
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // node
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Approve Production)
+Stage "Approve Production" skipped due to earlier failure(s)
+[Pipeline] getContext
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Deliver to Production)
+Stage "Deliver to Production" skipped due to earlier failure(s)
+[Pipeline] getContext
+[Pipeline] stage
+[Pipeline] { (Deploy Production)
+Stage "Deliver to Production" skipped due to earlier failure(s)
+[Pipeline] getContext
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Smoke Test Production)
+Stage "Deliver to Production" skipped due to earlier failure(s)
+[Pipeline] getContext
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Declarative: Post Actions)
+[Pipeline] echo
+NOTIFY: kijanikiosk-payments build 47 FAILED - fixing it is the team's top priority. Log: http://10.4.110.126:8080/job/kijanikiosk-payments/47/console
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] }
+[Pipeline] // timeout
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] End of Pipeline
+ERROR: script returned exit code 28
+Finished: FAILURE

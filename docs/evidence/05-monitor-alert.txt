@@ -1,0 +1,6 @@
+kk-payments error rate (staging): payment error rate > 5% for 2 consecutive minutes
+minute (UTC)       requests  failed    rate  breach
+2026-11-13T09:03         68      10   14.7%  YES
+2026-11-13T09:04        114      15   13.2%  YES
+2026-11-13T09:05        106      22   20.8%  YES
+STATUS: ALERT (minutes 2026-11-13T09:04, 2026-11-13T09:05)
