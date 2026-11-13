@@ -12,3 +12,5 @@ test-results/
 terraform/.terraform/
 terraform/*.tfstate
 terraform/*.tfstate.*
+# Monitor output is generated per run (evidence copies live in docs/evidence/)
+monitoring/reports/
