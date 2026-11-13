@@ -1,0 +1,49 @@
+digraph kijani {
+  graph [rankdir=LR, fontname="Helvetica", fontsize=20, labelloc=t, pad=0.4, nodesep=0.5, ranksep=0.9,
+         label="KijaniKiosk capstone (Track A): kk-payments delivery pipeline\n "];
+  node  [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=13, fillcolor="#ffffff", color="#444444", margin="0.2,0.12"];
+  edge  [fontname="Helvetica", fontsize=11, color="#555555"];
+
+  dev    [label="Developer\n(merge PR to main)", fillcolor="#eef3ff"];
+  github [label="GitHub\nkijanikiosk-payments", fillcolor="#eef3ff"];
+
+  subgraph cluster_vm {
+    label="Multipass VM kijanikiosk-api"; style="rounded,dashed"; color="#888888"; fontsize=13;
+    jenkins [label="Jenkins controller\nCI: lint, build, test, audit\n(node:22 container)", fillcolor="#fff4e0"];
+  }
+
+  subgraph cluster_laptop {
+    label="Laptop (Ubuntu)"; style="rounded,dashed"; color="#888888"; fontsize=13;
+    agent  [label="Jenkins agent k8s-deployer\ndocker build / push\ndeploy, smoke test, rollback", fillcolor="#fff4e0"];
+    nexus  [label="Nexus\nnpm package", fillcolor="#f2f2f2"];
+    iac    [label="Terraform + Ansible\nscripts/setup-environments.sh", fillcolor="#e9f7ef"];
+    envs   [label="environments/*.env\nsingle source of truth", shape=note, fillcolor="#e9f7ef"];
+    monitor[label="Error-rate monitor\nmonitoring/error_rate.py\nOK / ALERT", fillcolor="#fdeeee"];
+
+    subgraph cluster_mk {
+      label="Minikube cluster"; style="rounded"; color="#3366cc"; fontsize=13; fontcolor="#3366cc";
+      staging [label="namespace kijani-staging\nkk-payments x2 (NodePort 30002)\nConfigMap: DB_HOST=postgres-staging\nResourceQuota", fillcolor="#e8f0fe"];
+      prod    [label="namespace default (production)\nkk-payments x3 (NodePort 30001)\nConfigMap: DB_HOST=postgres-prod", fillcolor="#e8f0fe"];
+    }
+  }
+
+  hub    [label="Docker Hub (private)\nderickharon/kk-payments\n<version>-<sha>", fillcolor="#f2f2f2"];
+  human  [label="Approver\nJenkins input gate", shape=oval, fillcolor="#fffbe6"];
+
+  dev -> github [label="git push / PR merge"];
+  github -> jenkins [label="pollSCM every 3 min"];
+  jenkins -> nexus [label="npm publish"];
+  jenkins -> agent [label="delivery stages\n(WebSocket, outbound from laptop)"];
+  agent -> hub [label="docker push"];
+  hub -> staging [label="image pull\n(ImagePullSecret)"];
+  hub -> prod [label="image pull"];
+  agent -> staging [label="kubectl apply + rollout status\nsmoke test / auto rollback"];
+  agent -> human [label="smoke test passed", style=dashed];
+  human -> agent [label="approve", style=dashed];
+  agent -> prod [label="kubectl apply + smoke test\n(after approval)"];
+  envs -> iac [label="read by"];
+  envs -> agent [label="read by deploy scripts", style=dotted];
+  iac -> staging [label="Terraform: namespace + quota\nAnsible: ConfigMap + pull secret"];
+  iac -> prod [label="Ansible: ConfigMap\n+ pull secret"];
+  staging -> monitor [label="JSON logs\n(kubectl logs)"];
+}
