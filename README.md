@@ -1,10 +1,20 @@
 # KijaniKiosk kk-payments: staging-first delivery pipeline
 
+> **Capstone submission (Track A) – deliverables**
+> 1. **Scope:** [docs/scope.pdf](docs/scope.pdf) · [architecture diagram](docs/architecture.png)
+> 2. **Working repository:** this repo, release tag [`v1.0.0`](../../releases/tag/v1.0.0)
+> 3. **Pipeline demonstration (screenshots):** [docs/evidence/screenshots/](docs/evidence/screenshots/): build #48 staging → smoke test → approval gate → production; build #47 failed smoke test → automatic rollback, production untouched. Console logs and monitor ALERT in [docs/evidence/](docs/evidence/)
+> 4. **Feedback log (self-review):** [GitHub Issues](../../issues?q=is%3Aissue) · [docs/peer-feedback-log.md](docs/peer-feedback-log.md)
+> 5. **Slides:** [docs/slides.pdf](docs/slides.pdf)
+> 6. **Reflection:** [docs/reflection.md](docs/reflection.md)
+>
+> Also: [AI governance log](docs/ai-governance-log.md) · [runbook](docs/runbook.md)
+
 ## What is this?
 
 kk-payments is the KijaniKiosk payment-validation service (Node.js 22). This repository holds the service, its container image, and a delivery pipeline that releases it safely. A merge to `main` is built and tested, packaged as an immutable `<version>-<git-sha>` image, deployed to an isolated **staging** namespace, and smoke-tested there. Only then can a person approve the release to **production**. If the staging rollout or smoke test fails, the pipeline rolls staging back automatically and stops, so an unverified version never reaches production. This closes the gap left in Week 9, where a bad image made a rollout stall until someone noticed and rolled it back by hand.
 
-Capstone track: **A (Infrastructure-first)**. See `docs/scope.pdf`.
+Capstone track: **A (Infrastructure-first)**. See [docs/scope.pdf](docs/scope.pdf).
 
 ## Architecture
 
@@ -64,16 +74,16 @@ DOCKERHUB_TOKEN_FILE=~/.secrets/dockerhub-token scripts/setup-environments.sh
 `setup-environments.sh` stops with a clear message if a tool is missing or the cluster is not running. When it finishes, it prints each environment's ConfigMap and pull-secret type.
 
 ### Jenkins agent on the laptop (one time)
-1. Jenkins → **Manage Jenkins → Nodes → New Node**: name `k8s-deployer`, *Permanent Agent*, remote root `/home/<you>/jenkins-agent`, label `k8s-deployer`, executors `1`, launch method **Launch agent by connecting it to the controller**, tick **Use WebSocket**. Save.
-2. Copy the secret from the node page into `~/.secrets/jenkins-agent-secret` (`chmod 600`).
+1. Jenkins → **Manage Jenkins → Nodes → New Node**: name `k8s-deployer`, *Permanent Agent*, remote root `/home/<you>/jenkins-agent`, label `k8s-deployer`, executors `1`, usage *Only build jobs with label expressions matching this node*, launch method **Launch agent by connecting it to the controller**. Save. (Newer Jenkins versions have no "Use WebSocket" checkbox; the `-webSocket` flag below is what matters.)
+2. On the node page, copy **only the 64-character hex string after `-secret`** (not the whole command) into `~/.secrets/jenkins-agent-secret`, then `chmod 600` it.
 3. Start the agent (keep this terminal open, or run it under `tmux`):
    ```bash
    mkdir -p ~/jenkins-agent && cd ~/jenkins-agent
    curl -sO http://10.4.110.126:8080/jnlpJars/agent.jar
    java -jar agent.jar -url http://10.4.110.126:8080/ -name k8s-deployer -webSocket \
-        -secret @"$HOME/.secrets/jenkins-agent-secret" -workDir "$HOME/jenkins-agent"
+        -secret "$(tr -d '[:space:]' < ~/.secrets/jenkins-agent-secret)" -workDir "$HOME/jenkins-agent"
    ```
-   Expect `INFO: Connected`. The node page in Jenkins then shows the agent online.
+   Expect `INFO: Connected`. The node page in Jenkins then shows the agent online. A repeated "Handshake error" means the secret file holds more than the hex secret. Other setup pitfalls are in [docs/runbook.md](docs/runbook.md#known-setup-pitfalls-found-during-the-capstone-build).
 
 ## How to run the pipeline
 
@@ -113,7 +123,7 @@ scripts/generate-traffic.sh staging 150 20     # 20% failing payments for 2.5 mi
 scripts/monitor-error-rate.sh staging 5m       # STATUS: ALERT
 ```
 
-Operational detail (diagnosis, manual rollback, token rotation) is in `docs/runbook.md`.
+Operational detail (diagnosis, manual rollback, token rotation, known setup pitfalls) is in [docs/runbook.md](docs/runbook.md). Evidence from real runs is in [docs/evidence/](docs/evidence/).
 
 ## Known limitations
 
